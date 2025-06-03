@@ -1,0 +1,12 @@
+
+class Department {
+    String name
+    BigDecimal currentBudget
+    BigDecimal yearlyAllocation
+
+    static constraints = {
+        name unique: true, blank: false
+        currentBudget min: 0.0
+        yearlyAllocation min: 0.0
+    }
+}

@@ -1,0 +1,45 @@
+
+package api
+
+class BudgetRequestController {
+
+    BudgetRequestService budgetRequestService
+
+    static responseFormats = ['json']
+    static allowedMethods = [save: "POST", approve: "PUT", reject: "PUT"]
+
+    def save() {
+        def instance = new BudgetRequest(params)
+        try {
+            respond budgetRequestService.createRequest(instance)
+        } catch (e) {
+            render status: 400, text: e.message
+        }
+    }
+
+    def approve(Long id) {
+        try {
+            def user = request.getHeader("X-User")
+            respond budgetRequestService.approveRequest(id, user)
+        } catch (e) {
+            render status: 400, text: e.message
+        }
+    }
+
+    def reject(Long id) {
+        try {
+            def user = request.getHeader("X-User")
+            respond budgetRequestService.rejectRequest(id, user)
+        } catch (e) {
+            render status: 400, text: e.message
+        }
+    }
+
+    def pending() {
+        respond BudgetRequest.findAllByStatus(Status.PENDING)
+    }
+
+    def auditLogs(String entityType) {
+        respond AuditLog.findAllByEntityType(entityType)
+    }
+}

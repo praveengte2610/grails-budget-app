@@ -1,0 +1,15 @@
+
+class AuditLog {
+    String action
+    Long entityId
+    String entityType
+    String oldValue
+    String newValue
+    String changedBy
+    Date timestamp = new Date()
+
+    static constraints = {
+        action inList: ['APPROVED', 'REJECTED', 'CREATED']
+        entityType blank: false
+    }
+}

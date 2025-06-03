@@ -1,0 +1,61 @@
+
+import grails.gorm.transactions.Transactional
+
+@Transactional
+class BudgetRequestService {
+
+    def approveRequest(Long id, String managerName) {
+        BudgetRequest request = BudgetRequest.get(id)
+        if (!request || request.status != Status.PENDING) return null
+
+        def dept = request.department
+        if (request.requestedAmount > dept.yearlyAllocation * 0.1) {
+            throw new IllegalArgumentException("Amount exceeds 10% of allocation")
+        }
+
+        request.status = Status.APPROVED
+        request.approvedBy = managerName
+        dept.currentBudget -= request.requestedAmount
+        request.save(flush: true)
+        dept.save(flush: true)
+
+        logAudit("A", request, managerName)
+        return request
+    }
+
+    def rejectRequest(Long id, String managerName) {
+        BudgetRequest request = BudgetRequest.get(id)
+        if (!request || request.status != Status.PENDING) return null
+
+        request.status = Status.REJECTED
+        request.approvedBy = managerName
+        request.save(flush: true)
+
+        logAudit("REJECTED", request, managerName)
+        return request
+    }
+
+    def createRequest(BudgetRequest request) {
+        def recent = BudgetRequest.findAllByPurposeAndRequestedByAndDateCreatedGreaterThan(
+            request.purpose, request.requestedBy, new Date() - 7
+        )
+        if (recent) {
+            throw new IllegalArgumentException("Duplicate purpose request within 7 days")
+        }
+
+        request.save(flush: true)
+        logAudit("CREATED", request, request.requestedBy)
+        return request
+    }
+
+    private void logAudit(String action, BudgetRequest request, String user) {
+        new  AuditLog(
+            action: action,
+            entityId: request.id,
+            entityType: "BudgetRequest",
+            oldValue: "",
+            newValue: "${request.status}",
+            changedBy: user
+        ).save(flush: true)
+    }
+}

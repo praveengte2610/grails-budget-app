@@ -1,0 +1,23 @@
+
+enum Status {
+    PENDING, APPROVED, REJECTED
+}
+
+class BudgetRequest {
+    BigDecimal requestedAmount
+    String purpose
+    Status status = Status.PENDING
+    String requestedBy
+    String approvedBy
+    Date dateCreated
+    Date lastUpdated
+
+    static belongsTo = [department: Department]
+
+    static constraints = {
+        requestedAmount min: 0.01
+        purpose blank: false
+        requestedBy blank: false
+        approvedBy nullable: true
+    }
+}
